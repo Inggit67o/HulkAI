@@ -848,3 +848,88 @@ contract HulkAI {
     }
 
     function sliceSignalIds(uint256 start, uint256 length) external view returns (bytes32[] memory) {
+        if (start >= _signalIdList.length) return new bytes32[](0);
+        uint256 end = start + length;
+        if (end > _signalIdList.length) end = _signalIdList.length;
+        uint256 n = end - start;
+        bytes32[] memory out = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signalIdList[start + i];
+        }
+        return out;
+    }
+
+    function getSignalsByAssetClassPaginated(uint8 assetClass, uint256 offset, uint256 limit)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        uint256 total = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].assetClass == assetClass) total++;
+        }
+        if (offset >= total) return new bytes32[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        bytes32[] memory out = new bytes32[](n);
+        uint256 collected = 0;
+        uint256 written = 0;
+        for (uint256 i = 0; i < _signalIdList.length && written < n; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].assetClass == assetClass) {
+                if (collected >= offset) {
+                    out[written] = id;
+                    written++;
+                }
+                collected++;
+            }
+        }
+        return out;
+    }
+
+    function getSignalsByConvictionTierPaginated(uint8 tier, uint256 offset, uint256 limit)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        uint256 total = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].convictionTier == tier) total++;
+        }
+        if (offset >= total) return new bytes32[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        bytes32[] memory out = new bytes32[](n);
+        uint256 collected = 0;
+        uint256 written = 0;
+        for (uint256 i = 0; i < _signalIdList.length && written < n; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].convictionTier == tier) {
+                if (collected >= offset) {
+                    out[written] = id;
+                    written++;
+                }
+                collected++;
+            }
+        }
+        return out;
+    }
+
+    function hasSignal(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].createdAt != 0;
+    }
+
+    function isActive(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].createdAt != 0 && !_signals[signalId].retired;
+    }
+
+    function gammaOracleAddress() external view returns (address) {
+        return gammaOracle;
+    }
+
+    function smashTreasuryAddress() external view returns (address) {
+        return smashTreasury;
+    }
+
