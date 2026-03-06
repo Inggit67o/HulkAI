@@ -338,3 +338,88 @@ contract HulkAI {
 
     function feeBps() external view returns (uint256) {
         return _feeBps;
+    }
+
+    function nextSignalIndex() external view returns (uint256) {
+        return _nextSignalIndex;
+    }
+
+    function namespaceFrozen(bytes32 ns) external view returns (bool) {
+        return _namespaceFrozen[ns];
+    }
+
+    function totalSignals() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function signalIdAt(uint256 index) external view returns (bytes32) {
+        if (index >= _signalIdList.length) revert HulkAI_InvalidIndex();
+        return _signalIdList[index];
+    }
+
+    // -------------------------------------------------------------------------
+    // BATCH VIEWS
+    // -------------------------------------------------------------------------
+
+    function getSignalsBatch(bytes32[] calldata ids)
+        external
+        view
+        returns (
+            address[] memory creators,
+            uint8[] memory assetClasses,
+            uint8[] memory convictionTiers,
+            uint128[] memory sizesWei,
+            uint64[] memory createdAts,
+            bool[] memory smasheds,
+            bool[] memory retireds
+        )
+    {
+        uint256 n = ids.length;
+        creators = new address[](n);
+        assetClasses = new uint8[](n);
+        convictionTiers = new uint8[](n);
+        sizesWei = new uint128[](n);
+        createdAts = new uint64[](n);
+        smasheds = new bool[](n);
+        retireds = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            SignalRecord storage r = _signals[ids[i]];
+            creators[i] = r.creator;
+            assetClasses[i] = r.assetClass;
+            convictionTiers[i] = r.convictionTier;
+            sizesWei[i] = r.sizeWei;
+            createdAts[i] = r.createdAt;
+            smasheds[i] = r.smashed;
+            retireds[i] = r.retired;
+        }
+    }
+
+    function getSignalIdsInRange(uint256 fromIndex, uint256 toIndex)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        if (fromIndex > toIndex || toIndex > _signalIdList.length) revert HulkAI_InvalidIndex();
+        uint256 n = toIndex - fromIndex;
+        bytes32[] memory out = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signalIdList[fromIndex + i];
+        }
+        return out;
+    }
+
+    function getSignalIdsForCreator(address creator) external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].creator == creator) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].creator == creator) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
