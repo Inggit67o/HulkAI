@@ -1443,3 +1443,88 @@ contract HulkAI {
         uint256 c = 0;
         for (uint256 i = 0; i < _signalIdList.length; i++) {
             if (!_signals[_signalIdList[i]].smashed) c++;
+        }
+        return c;
+    }
+
+    function getSignalIdsNotSmashed() external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (!_signals[_signalIdList[i]].smashed) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (!_signals[id].smashed) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
+    }
+
+    function getSignalIdsNotRetired() external view returns (bytes32[] memory) {
+        return this.getSignalIdsActive();
+    }
+
+    function firstId() external view returns (bytes32) {
+        return this.getFirstSignalId();
+    }
+
+    function lastId() external view returns (bytes32) {
+        return this.getLastSignalId();
+    }
+
+    function at(uint256 index) external view returns (bytes32) {
+        return this.signalIdAt(index);
+    }
+
+    function oracleAddr() external view returns (address) {
+        return gammaOracle;
+    }
+
+    function treasuryAddr() external view returns (address) {
+        return smashTreasury;
+    }
+
+    function guardianAddr() external view returns (address) {
+        return bannerGuardian;
+    }
+
+    function getOwner() external view returns (address) {
+        return owner;
+    }
+
+    function getFeeBpsValue() external view returns (uint256) {
+        return _feeBps;
+    }
+
+    function getNextIndex() external view returns (uint256) {
+        return _nextSignalIndex;
+    }
+
+    function getTotalSignals() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function isFrozen(bytes32 ns) external view returns (bool) {
+        return _namespaceFrozen[ns];
+    }
+
+    function defaultFrozen() external view returns (bool) {
+        return _namespaceFrozen[HULK_NAMESPACE];
+    }
+
+    function HULK_maxAssetClass() external pure returns (uint256) {
+        return HULK_MAX_ASSET_CLASS;
+    }
+
+    function HULK_maxConviction() external pure returns (uint256) {
+        return HULK_MAX_CONVICTION;
+    }
+
+    function HULK_maxSignalsCap() external pure returns (uint256) {
+        return HULK_MAX_SIGNALS;
+    }
+
