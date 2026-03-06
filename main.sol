@@ -1188,3 +1188,88 @@ contract HulkAI {
         return _voteCount[signalId];
     }
 
+    function sumFor(bytes32 signalId) external view returns (uint256) {
+        return _voteSum[signalId];
+    }
+
+    function avgFor(bytes32 signalId) external view returns (uint256) {
+        uint256 n = _voteCount[signalId];
+        return n == 0 ? 0 : _voteSum[signalId] / n;
+    }
+
+    function gammaOracleAddr() external view returns (address) {
+        return gammaOracle;
+    }
+
+    function smashTreasuryAddr() external view returns (address) {
+        return smashTreasury;
+    }
+
+    function bannerGuardianAddr() external view returns (address) {
+        return bannerGuardian;
+    }
+
+    function ownerAddr() external view returns (address) {
+        return owner;
+    }
+
+    function feeBpsValue() external view returns (uint256) {
+        return _feeBps;
+    }
+
+    function nextIdx() external view returns (uint256) {
+        return _nextSignalIndex;
+    }
+
+    function signalListLength() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function constantMaxAssetClass() external pure returns (uint8) {
+        return uint8(HULK_MAX_ASSET_CLASS);
+    }
+
+    function constantMaxConviction() external pure returns (uint8) {
+        return uint8(HULK_MAX_CONVICTION);
+    }
+
+    function constantMaxSignals() external pure returns (uint256) {
+        return HULK_MAX_SIGNALS;
+    }
+
+    function constantMaxFeeBps() external pure returns (uint256) {
+        return HULK_MAX_FEE_BPS;
+    }
+
+    function constantMinVoteScore() external pure returns (uint8) {
+        return uint8(HULK_MIN_VOTE_SCORE);
+    }
+
+    function constantMaxVoteScore() external pure returns (uint8) {
+        return uint8(HULK_MAX_VOTE_SCORE);
+    }
+
+    function constantFeeDenomBps() external pure returns (uint256) {
+        return HULK_FEE_DENOM_BPS;
+    }
+
+    function namespaceDefault() external pure returns (bytes32) {
+        return HULK_NAMESPACE;
+    }
+
+    function exists(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].createdAt != 0;
+    }
+
+    function isRetired(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].retired;
+    }
+
+    function isSmashed(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].smashed;
+    }
+
+    function voted(bytes32 signalId, address account) external view returns (bool) {
+        return _hasVoted[signalId][account];
+    }
+
