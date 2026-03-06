@@ -168,3 +168,88 @@ contract HulkAI {
     function setNamespaceFrozen(bytes32 ns, bool frozen) external onlyBannerGuardian {
         _namespaceFrozen[ns] = frozen;
         emit NamespaceFrozen(ns, frozen, block.number);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner == address(0)) revert HulkAI_ZeroAddress();
+        owner = newOwner;
+    }
+
+    // -------------------------------------------------------------------------
+    // WRITES (REGISTER / SMASH / VOTE)
+    // -------------------------------------------------------------------------
+
+    function registerSignal(
+        bytes32 signalId,
+        uint8 assetClass,
+        uint8 convictionTier,
+        uint128 sizeWei
+    ) external nonReentrant whenNamespaceNotFrozen(HULK_NAMESPACE) {
+        if (signalId == bytes32(0)) revert HulkAI_ZeroSignal();
+        if (_signals[signalId].createdAt != 0) revert HulkAI_AlreadyExists();
+        if (assetClass > HULK_MAX_ASSET_CLASS) revert HulkAI_InvalidAssetClass();
+        if (convictionTier > HULK_MAX_CONVICTION) revert HulkAI_InvalidConviction();
+        if (_signalIdList.length >= HULK_MAX_SIGNALS) revert HulkAI_TooManySignals();
+
+        uint64 t = uint64(block.timestamp);
+        _signals[signalId] = SignalRecord({
+            creator: msg.sender,
+            assetClass: assetClass,
+            convictionTier: convictionTier,
+            sizeWei: sizeWei,
+            createdAt: t,
+            smashed: false,
+            retired: false
+        });
+        _signalIdList.push(signalId);
+        _nextSignalIndex += 1;
+
+        emit SignalRegistered(signalId, msg.sender, assetClass, convictionTier, sizeWei, t);
+    }
+
+    function smashPick(bytes32 signalId) external onlyGammaOracle {
+        SignalRecord storage r = _signals[signalId];
+        if (r.createdAt == 0) revert HulkAI_NotFound();
+        if (r.retired) revert HulkAI_AlreadyRetired();
+        if (r.smashed) return;
+        r.smashed = true;
+        emit PickSmashed(signalId, msg.sender, uint64(block.timestamp));
+    }
+
+    function unsmashPick(bytes32 signalId) external onlyGammaOracle {
+        SignalRecord storage r = _signals[signalId];
+        if (r.createdAt == 0) revert HulkAI_NotFound();
+        if (!r.smashed) revert HulkAI_NotSmashed();
+        r.smashed = false;
+        emit PickUnsmash(signalId, msg.sender, uint64(block.timestamp));
+    }
+
+    function retireSignal(bytes32 signalId) external onlyBannerGuardian {
+        SignalRecord storage r = _signals[signalId];
+        if (r.createdAt == 0) revert HulkAI_NotFound();
+        if (r.retired) revert HulkAI_AlreadyRetired();
+        r.retired = true;
+        emit SignalRetired(signalId, msg.sender, uint64(block.timestamp));
+    }
+
+    function voteConviction(bytes32 signalId, uint8 score) external payable nonReentrant {
+        SignalRecord storage r = _signals[signalId];
+        if (r.createdAt == 0) revert HulkAI_NotFound();
+        if (r.retired) revert HulkAI_AlreadyRetired();
+        if (_hasVoted[signalId][msg.sender]) revert HulkAI_AlreadyVoted();
+        if (score < HULK_MIN_VOTE_SCORE || score > HULK_MAX_VOTE_SCORE) revert HulkAI_InvalidVoteScore();
+
+        uint256 feeWei = (msg.value * _feeBps) / HULK_FEE_DENOM_BPS;
+        if (msg.value < feeWei) revert HulkAI_InsufficientFee();
+        uint256 refund = msg.value - feeWei;
+        if (feeWei > 0) {
+            (bool ok,) = smashTreasury.call{value: feeWei}("");
+            require(ok, "HulkAI: treasury send failed");
+        }
+        if (refund > 0) {
+            (bool ok,) = msg.sender.call{value: refund}("");
+            require(ok, "HulkAI: refund failed");
+        }
+
+        _hasVoted[signalId][msg.sender] = true;
+        _voteCount[signalId] += 1;
