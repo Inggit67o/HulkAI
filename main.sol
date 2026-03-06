@@ -508,3 +508,88 @@ contract HulkAI {
         return (valueSent * _feeBps) / HULK_FEE_DENOM_BPS;
     }
 
+    function quoteFeeForAmount(uint256 amountWei) external view returns (uint256) {
+        return (amountWei * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
+    function wouldRegisterSucceed(bytes32 signalId) external view returns (bool) {
+        if (signalId == bytes32(0)) return false;
+        if (_signals[signalId].createdAt != 0) return false;
+        if (_signalIdList.length >= HULK_MAX_SIGNALS) return false;
+        if (_namespaceFrozen[HULK_NAMESPACE]) return false;
+        return true;
+    }
+
+    function wouldVoteSucceed(bytes32 signalId, address account) external view returns (bool) {
+        if (_signals[signalId].createdAt == 0) return false;
+        if (_signals[signalId].retired) return false;
+        if (_hasVoted[signalId][account]) return false;
+        return true;
+    }
+
+    function deriveSignalId(address creator, uint256 nonce, bytes32 salt)
+        external
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(creator, nonce, salt));
+    }
+
+    receive() external payable {}
+
+    // -------------------------------------------------------------------------
+    // EXTRA VIEW ALIASES AND HELPERS
+    // -------------------------------------------------------------------------
+
+    function getCreator(bytes32 signalId) external view returns (address) {
+        return _signals[signalId].creator;
+    }
+
+    function getAssetClass(bytes32 signalId) external view returns (uint8) {
+        return _signals[signalId].assetClass;
+    }
+
+    function getConvictionTier(bytes32 signalId) external view returns (uint8) {
+        return _signals[signalId].convictionTier;
+    }
+
+    function getSizeWei(bytes32 signalId) external view returns (uint128) {
+        return _signals[signalId].sizeWei;
+    }
+
+    function getCreatedAt(bytes32 signalId) external view returns (uint64) {
+        return _signals[signalId].createdAt;
+    }
+
+    function getSmashed(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].smashed;
+    }
+
+    function getRetired(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].retired;
+    }
+
+    function voteCount(bytes32 signalId) external view returns (uint256) {
+        return _voteCount[signalId];
+    }
+
+    function voteSum(bytes32 signalId) external view returns (uint256) {
+        return _voteSum[signalId];
+    }
+
+    function averageScore(bytes32 signalId) external view returns (uint256) {
+        uint256 n = _voteCount[signalId];
+        if (n == 0) return 0;
+        return _voteSum[signalId] / n;
+    }
+
+    function totalSignalCount() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function listLength() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function getOracle() external view returns (address) {
+        return gammaOracle;
