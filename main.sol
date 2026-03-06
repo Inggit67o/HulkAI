@@ -1273,3 +1273,88 @@ contract HulkAI {
         return _hasVoted[signalId][account];
     }
 
+    function registerAllowed(bytes32 signalId) external view returns (bool) {
+        return this.wouldRegisterSucceed(signalId);
+    }
+
+    function voteAllowed(bytes32 signalId, address account) external view returns (bool) {
+        return this.wouldVoteSucceed(signalId, account);
+    }
+
+    function feeFromValue(uint256 valueWei) external view returns (uint256) {
+        return (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
+    function refundFromValue(uint256 valueWei) external view returns (uint256) {
+        uint256 fee = (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+        return valueWei - fee;
+    }
+
+    function getFullRecord(bytes32 signalId)
+        external
+        view
+        returns (
+            address c,
+            uint8 ac,
+            uint8 ct,
+            uint128 sw,
+            uint64 ca,
+            bool sm,
+            bool ret
+        )
+    {
+        SignalRecord storage r = _signals[signalId];
+        return (r.creator, r.assetClass, r.convictionTier, r.sizeWei, r.createdAt, r.smashed, r.retired);
+    }
+
+    function getVoteSummary(bytes32 signalId)
+        external
+        view
+        returns (uint256 numVotes, uint256 totalScore, uint256 averageScore)
+    {
+        numVotes = _voteCount[signalId];
+        totalScore = _voteSum[signalId];
+        averageScore = numVotes == 0 ? 0 : totalScore / numVotes;
+    }
+
+    function allIds() external view returns (bytes32[] memory) {
+        return _signalIdList;
+    }
+
+    function idsInRange(uint256 from_, uint256 to_) external view returns (bytes32[] memory) {
+        return this.getSignalIdsInRange(from_, to_);
+    }
+
+    function idsForCreator(address creator) external view returns (bytes32[] memory) {
+        return this.getSignalIdsForCreator(creator);
+    }
+
+    function idsSmashed() external view returns (bytes32[] memory) {
+        return this.getSignalIdsSmashed();
+    }
+
+    function idsByAsset(uint8 ac) external view returns (bytes32[] memory) {
+        return this.getSignalIdsByAssetClass(ac);
+    }
+
+    function idsByConviction(uint8 ct) external view returns (bytes32[] memory) {
+        return this.getSignalIdsByConvictionTier(ct);
+    }
+
+    function idsRetired() external view returns (bytes32[] memory) {
+        return this.getSignalIdsRetired();
+    }
+
+    function idsActive() external view returns (bytes32[] memory) {
+        return this.getSignalIdsActive();
+    }
+
+    function numSignals() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function numSmashed() external view returns (uint256) {
+        return this.countSmashed();
+    }
+
+    function numRetired() external view returns (uint256) {
