@@ -1103,3 +1103,88 @@ contract HulkAI {
     }
 
     function countByConvictionTier(uint8 ct) external view returns (uint256) {
+        return this.countSignalsByConvictionTier(ct);
+    }
+
+    function countRetired() external view returns (uint256) {
+        return this.getRetiredCount();
+    }
+
+    function countActive() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (!_signals[_signalIdList[i]].retired) c++;
+        }
+        return c;
+    }
+
+    function signalAt(uint256 index) external view returns (bytes32) {
+        return this.signalIdAt(index);
+    }
+
+    function idAt(uint256 index) external view returns (bytes32) {
+        if (index >= _signalIdList.length) revert HulkAI_InvalidIndex();
+        return _signalIdList[index];
+    }
+
+    function recordAt(bytes32 signalId)
+        external
+        view
+        returns (address c, uint8 ac, uint8 ct, uint128 sw, uint64 ca, bool sm, bool ret)
+    {
+        SignalRecord storage r = _signals[signalId];
+        return (r.creator, r.assetClass, r.convictionTier, r.sizeWei, r.createdAt, r.smashed, r.retired);
+    }
+
+    function frozen(bytes32 ns) external view returns (bool) {
+        return _namespaceFrozen[ns];
+    }
+
+    function defaultNsFrozen() external view returns (bool) {
+        return _namespaceFrozen[HULK_NAMESPACE];
+    }
+
+    function getFeeBps() external view returns (uint256) {
+        return _feeBps;
+    }
+
+    function getNextSignalIndex() external view returns (uint256) {
+        return _nextSignalIndex;
+    }
+
+    // -------------------------------------------------------------------------
+    // ADDITIONAL VIEW HELPERS (Hulk Smash utilities)
+    // -------------------------------------------------------------------------
+
+    function creatorOf(bytes32 signalId) external view returns (address) {
+        return _signals[signalId].creator;
+    }
+
+    function assetClassOf(bytes32 signalId) external view returns (uint8) {
+        return _signals[signalId].assetClass;
+    }
+
+    function convictionOf(bytes32 signalId) external view returns (uint8) {
+        return _signals[signalId].convictionTier;
+    }
+
+    function sizeOf(bytes32 signalId) external view returns (uint128) {
+        return _signals[signalId].sizeWei;
+    }
+
+    function createdAt(bytes32 signalId) external view returns (uint64) {
+        return _signals[signalId].createdAt;
+    }
+
+    function smashed(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].smashed;
+    }
+
+    function retired(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].retired;
+    }
+
+    function votesFor(bytes32 signalId) external view returns (uint256) {
+        return _voteCount[signalId];
+    }
+
