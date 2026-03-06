@@ -763,3 +763,88 @@ contract HulkAI {
     function getSignalIdsActive() external view returns (bytes32[] memory) {
         uint256 count = 0;
         for (uint256 i = 0; i < _signalIdList.length; i++) {
+            SignalRecord storage r = _signals[_signalIdList[i]];
+            if (!r.retired) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (!_signals[id].retired) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
+    }
+
+    function getFirstSignalId() external view returns (bytes32) {
+        if (_signalIdList.length == 0) return bytes32(0);
+        return _signalIdList[0];
+    }
+
+    function getLastSignalId() external view returns (bytes32) {
+        if (_signalIdList.length == 0) return bytes32(0);
+        return _signalIdList[_signalIdList.length - 1];
+    }
+
+    function getSignalIdAtIndex(uint256 index) external view returns (bytes32) {
+        return this.signalIdAt(index);
+    }
+
+    function canVote(bytes32 signalId, address account) external view returns (bool) {
+        return this.wouldVoteSucceed(signalId, account);
+    }
+
+    function canRegister(bytes32 signalId) external view returns (bool) {
+        return this.wouldRegisterSucceed(signalId);
+    }
+
+    function feeForValue(uint256 weiAmount) external view returns (uint256) {
+        return this.quoteFeeForAmount(weiAmount);
+    }
+
+    function computeFee(uint256 valueWei) external view returns (uint256) {
+        return (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
+    function getRecord(bytes32 signalId)
+        external
+        view
+        returns (
+            address creator_,
+            uint8 assetClass_,
+            uint8 convictionTier_,
+            uint128 sizeWei_,
+            uint64 createdAt_,
+            bool smashed_,
+            bool retired_
+        )
+    {
+        return this.getSignalFull(signalId);
+    }
+
+    function signalInfo(bytes32 signalId)
+        external
+        view
+        returns (address c, uint8 ac, uint8 ct, uint128 sw, uint64 ca, bool sm, bool ret)
+    {
+        SignalRecord storage r = _signals[signalId];
+        return (r.creator, r.assetClass, r.convictionTier, r.sizeWei, r.createdAt, r.smashed, r.retired);
+    }
+
+    function convictionInfo(bytes32 signalId)
+        external
+        view
+        returns (uint256 count, uint256 sum, uint256 avg)
+    {
+        count = _voteCount[signalId];
+        sum = _voteSum[signalId];
+        avg = count == 0 ? 0 : sum / count;
+    }
+
+    function allSignalIds() external view returns (bytes32[] memory) {
+        return _signalIdList;
+    }
+
+    function sliceSignalIds(uint256 start, uint256 length) external view returns (bytes32[] memory) {
