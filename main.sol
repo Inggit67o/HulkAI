@@ -1783,3 +1783,80 @@ contract HulkAI {
             HULK_MAX_ASSET_CLASS,
             HULK_MAX_CONVICTION,
             HULK_MAX_SIGNALS,
+            HULK_MAX_FEE_BPS,
+            HULK_MIN_VOTE_SCORE,
+            HULK_MAX_VOTE_SCORE
+        );
+    }
+
+    function getImmutables() external view returns (address oracle_, address treasury_, address guardian_) {
+        return (gammaOracle, smashTreasury, bannerGuardian);
+    }
+
+    function getState() external view returns (address owner_, uint256 feeBps_, uint256 nextIdx_, uint256 total_) {
+        return (owner, _feeBps, _nextSignalIndex, _signalIdList.length);
+    }
+
+    function getSignalCompact(bytes32 id)
+        external view returns (address c, uint8 ac, uint8 ct, uint128 sw, uint64 ca, bool sm, bool ret, uint256 vc, uint256 vs)
+    {
+        SignalRecord storage r = _signals[id];
+        return (
+            r.creator,
+            r.assetClass,
+            r.convictionTier,
+            r.sizeWei,
+            r.createdAt,
+            r.smashed,
+            r.retired,
+            _voteCount[id],
+            _voteSum[id]
+        );
+    }
+
+    function gammaOracleImmutable() external view returns (address) { return gammaOracle; }
+    function smashTreasuryImmutable() external view returns (address) { return smashTreasury; }
+    function bannerGuardianImmutable() external view returns (address) { return bannerGuardian; }
+    function feeDenomBpsConst() external pure returns (uint256) { return HULK_FEE_DENOM_BPS; }
+    function maxAssetClassConst() external pure returns (uint256) { return HULK_MAX_ASSET_CLASS; }
+    function maxConvictionConst() external pure returns (uint256) { return HULK_MAX_CONVICTION; }
+    function maxSignalsConst() external pure returns (uint256) { return HULK_MAX_SIGNALS; }
+    function maxFeeBpsConst() external pure returns (uint256) { return HULK_MAX_FEE_BPS; }
+    function minVoteScoreConst() external pure returns (uint256) { return HULK_MIN_VOTE_SCORE; }
+    function maxVoteScoreConst() external pure returns (uint256) { return HULK_MAX_VOTE_SCORE; }
+    function namespaceConst() external pure returns (bytes32) { return HULK_NAMESPACE; }
+
+    function readCreator(bytes32 id) external view returns (address) { return _signals[id].creator; }
+    function readAssetClass(bytes32 id) external view returns (uint8) { return _signals[id].assetClass; }
+    function readConviction(bytes32 id) external view returns (uint8) { return _signals[id].convictionTier; }
+    function readSize(bytes32 id) external view returns (uint128) { return _signals[id].sizeWei; }
+    function readCreatedAt(bytes32 id) external view returns (uint64) { return _signals[id].createdAt; }
+    function readSmashed(bytes32 id) external view returns (bool) { return _signals[id].smashed; }
+    function readRetired(bytes32 id) external view returns (bool) { return _signals[id].retired; }
+    function readVoteCount(bytes32 id) external view returns (uint256) { return _voteCount[id]; }
+    function readVoteSum(bytes32 id) external view returns (uint256) { return _voteSum[id]; }
+    function readAverage(bytes32 id) external view returns (uint256) {
+        uint256 n = _voteCount[id];
+        return n == 0 ? 0 : _voteSum[id] / n;
+    }
+    function readFeeBps() external view returns (uint256) { return _feeBps; }
+    function readNextIndex() external view returns (uint256) { return _nextSignalIndex; }
+    function readTotalSignals() external view returns (uint256) { return _signalIdList.length; }
+    function readOwner() external view returns (address) { return owner; }
+    function readNamespaceFrozen(bytes32 ns) external view returns (bool) { return _namespaceFrozen[ns]; }
+
+    function HULK_feeDenomBps() external pure returns (uint256) { return HULK_FEE_DENOM_BPS; }
+    function HULK_maxAsset() external pure returns (uint256) { return HULK_MAX_ASSET_CLASS; }
+    function HULK_maxConv() external pure returns (uint256) { return HULK_MAX_CONVICTION; }
+    function HULK_namespaceBytes() external pure returns (bytes32) { return HULK_NAMESPACE; }
+    function HULK_signalCap() external pure returns (uint256) { return HULK_MAX_SIGNALS; }
+
+    function signalIdList(uint256 i) external view returns (bytes32) {
+        if (i >= _signalIdList.length) revert HulkAI_InvalidIndex();
+        return _signalIdList[i];
+    }
+    function length() external view returns (uint256) { return _signalIdList.length; }
+    function feeBpsCurrent() external view returns (uint256) { return _feeBps; }
+    function nextSignalIndexCurrent() external view returns (uint256) { return _nextSignalIndex; }
+}
+
