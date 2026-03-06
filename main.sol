@@ -1018,3 +1018,88 @@ contract HulkAI {
             out[i] = _signals[ids[i]].assetClass;
         }
         return out;
+    }
+
+    function getBatchConvictionTiers(bytes32[] calldata ids) external view returns (uint8[] memory) {
+        uint256 n = ids.length;
+        uint8[] memory out = new uint8[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].convictionTier;
+        }
+        return out;
+    }
+
+    function getBatchSizesWei(bytes32[] calldata ids) external view returns (uint128[] memory) {
+        uint256 n = ids.length;
+        uint128[] memory out = new uint128[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].sizeWei;
+        }
+        return out;
+    }
+
+    function getBatchCreatedAts(bytes32[] calldata ids) external view returns (uint64[] memory) {
+        uint256 n = ids.length;
+        uint64[] memory out = new uint64[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].createdAt;
+        }
+        return out;
+    }
+
+    function getBatchSmashed(bytes32[] calldata ids) external view returns (bool[] memory) {
+        uint256 n = ids.length;
+        bool[] memory out = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].smashed;
+        }
+        return out;
+    }
+
+    function getBatchRetired(bytes32[] calldata ids) external view returns (bool[] memory) {
+        uint256 n = ids.length;
+        bool[] memory out = new bool[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].retired;
+        }
+        return out;
+    }
+
+    function getBatchVoteCounts(bytes32[] calldata ids) external view returns (uint256[] memory) {
+        uint256 n = ids.length;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _voteCount[ids[i]];
+        }
+        return out;
+    }
+
+    function getBatchVoteSums(bytes32[] calldata ids) external view returns (uint256[] memory) {
+        uint256 n = ids.length;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _voteSum[ids[i]];
+        }
+        return out;
+    }
+
+    function getBatchAverages(bytes32[] calldata ids) external view returns (uint256[] memory) {
+        uint256 n = ids.length;
+        uint256[] memory out = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            uint256 c = _voteCount[ids[i]];
+            uint256 s = _voteSum[ids[i]];
+            out[i] = c == 0 ? 0 : s / c;
+        }
+        return out;
+    }
+
+    function countByCreator(address creator) external view returns (uint256) {
+        return this.getSignalsByCreatorCount(creator);
+    }
+
+    function countByAssetClass(uint8 ac) external view returns (uint256) {
+        return this.countSignalsByAssetClass(ac);
+    }
+
+    function countByConvictionTier(uint8 ct) external view returns (uint256) {
