@@ -253,3 +253,88 @@ contract HulkAI {
 
         _hasVoted[signalId][msg.sender] = true;
         _voteCount[signalId] += 1;
+        _voteSum[signalId] += score;
+        emit ConvictionVote(signalId, msg.sender, score, uint64(block.timestamp));
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEWS (SIGNAL)
+    // -------------------------------------------------------------------------
+
+    function getSignalCreator(bytes32 signalId) external view returns (address) {
+        return _signals[signalId].creator;
+    }
+
+    function getSignalAssetClass(bytes32 signalId) external view returns (uint8) {
+        return _signals[signalId].assetClass;
+    }
+
+    function getSignalConvictionTier(bytes32 signalId) external view returns (uint8) {
+        return _signals[signalId].convictionTier;
+    }
+
+    function getSignalSizeWei(bytes32 signalId) external view returns (uint128) {
+        return _signals[signalId].sizeWei;
+    }
+
+    function getSignalCreatedAt(bytes32 signalId) external view returns (uint64) {
+        return _signals[signalId].createdAt;
+    }
+
+    function isSignalSmashed(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].smashed;
+    }
+
+    function isSignalRetired(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].retired;
+    }
+
+    function getSignalFull(bytes32 signalId)
+        external
+        view
+        returns (
+            address creator,
+            uint8 assetClass,
+            uint8 convictionTier,
+            uint128 sizeWei,
+            uint64 createdAt,
+            bool smashed,
+            bool retired
+        )
+    {
+        SignalRecord storage r = _signals[signalId];
+        return (
+            r.creator,
+            r.assetClass,
+            r.convictionTier,
+            r.sizeWei,
+            r.createdAt,
+            r.smashed,
+            r.retired
+        );
+    }
+
+    function signalExists(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].createdAt != 0;
+    }
+
+    function hasVoted(bytes32 signalId, address account) external view returns (bool) {
+        return _hasVoted[signalId][account];
+    }
+
+    function getVoteCount(bytes32 signalId) external view returns (uint256) {
+        return _voteCount[signalId];
+    }
+
+    function getVoteSum(bytes32 signalId) external view returns (uint256) {
+        return _voteSum[signalId];
+    }
+
+    function getAverageConvictionScore(bytes32 signalId) external view returns (uint256) {
+        uint256 n = _voteCount[signalId];
+        if (n == 0) return 0;
+        return _voteSum[signalId] / n;
+    }
+
+    function feeBps() external view returns (uint256) {
+        return _feeBps;
