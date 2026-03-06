@@ -933,3 +933,88 @@ contract HulkAI {
         return smashTreasury;
     }
 
+    function bannerGuardianAddress() external view returns (address) {
+        return bannerGuardian;
+    }
+
+    function ownerAddress() external view returns (address) {
+        return owner;
+    }
+
+    function currentFeeBps() external view returns (uint256) {
+        return _feeBps;
+    }
+
+    function nextIndex() external view returns (uint256) {
+        return _nextSignalIndex;
+    }
+
+    function totalCount() external view returns (uint256) {
+        return _signalIdList.length;
+    }
+
+    function getNames() external pure returns (bytes32) {
+        return HULK_NAMESPACE;
+    }
+
+    function assetClassUpperBound() external pure returns (uint8) {
+        return uint8(HULK_MAX_ASSET_CLASS);
+    }
+
+    function convictionUpperBound() external pure returns (uint8) {
+        return uint8(HULK_MAX_CONVICTION);
+    }
+
+    function capSignals() external pure returns (uint256) {
+        return HULK_MAX_SIGNALS;
+    }
+
+    function capFeeBps() external pure returns (uint256) {
+        return HULK_MAX_FEE_BPS;
+    }
+
+    function voteScoreMin() external pure returns (uint8) {
+        return uint8(HULK_MIN_VOTE_SCORE);
+    }
+
+    function voteScoreMax() external pure returns (uint8) {
+        return uint8(HULK_MAX_VOTE_SCORE);
+    }
+
+    function bpsDenominator() external pure returns (uint256) {
+        return HULK_FEE_DENOM_BPS;
+    }
+
+    function checkRegister(bytes32 signalId) external view returns (bool ok) {
+        return this.wouldRegisterSucceed(signalId);
+    }
+
+    function checkVote(bytes32 signalId, address who) external view returns (bool ok) {
+        return this.wouldVoteSucceed(signalId, who);
+    }
+
+    function estimateVoteFee(uint256 valueWei) external view returns (uint256) {
+        return (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
+    function estimateRefund(uint256 valueWei) external view returns (uint256) {
+        uint256 fee = (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+        return valueWei - fee;
+    }
+
+    function getBatchCreators(bytes32[] calldata ids) external view returns (address[] memory) {
+        uint256 n = ids.length;
+        address[] memory out = new address[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].creator;
+        }
+        return out;
+    }
+
+    function getBatchAssetClasses(bytes32[] calldata ids) external view returns (uint8[] memory) {
+        uint256 n = ids.length;
+        uint8[] memory out = new uint8[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = _signals[ids[i]].assetClass;
+        }
+        return out;
