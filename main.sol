@@ -1698,3 +1698,88 @@ contract HulkAI {
     function nextIdxRead() external view returns (uint256) { return _nextSignalIndex; }
     function totalLen() external view returns (uint256) { return _signalIdList.length; }
     function maxAsset() external pure returns (uint8) { return uint8(HULK_MAX_ASSET_CLASS); }
+    function maxConv() external pure returns (uint8) { return uint8(HULK_MAX_CONVICTION); }
+    function capSignalsNum() external pure returns (uint256) { return HULK_MAX_SIGNALS; }
+    function capFee() external pure returns (uint256) { return HULK_MAX_FEE_BPS; }
+    function minScore() external pure returns (uint8) { return uint8(HULK_MIN_VOTE_SCORE); }
+    function maxScore() external pure returns (uint8) { return uint8(HULK_MAX_VOTE_SCORE); }
+    function bpsDenom() external pure returns (uint256) { return HULK_FEE_DENOM_BPS; }
+    function ns() external pure returns (bytes32) { return HULK_NAMESPACE; }
+    function existsId(bytes32 id) external view returns (bool) { return _signals[id].createdAt != 0; }
+    function smashedId(bytes32 id) external view returns (bool) { return _signals[id].smashed; }
+    function retiredId(bytes32 id) external view returns (bool) { return _signals[id].retired; }
+    function hasVotedId(bytes32 id, address a) external view returns (bool) { return _hasVoted[id][a]; }
+    function canReg(bytes32 id) external view returns (bool) { return this.wouldRegisterSucceed(id); }
+    function canVoteId(bytes32 id, address a) external view returns (bool) { return this.wouldVoteSucceed(id, a); }
+    function feeVal(uint256 v) external view returns (uint256) { return (v * _feeBps) / HULK_FEE_DENOM_BPS; }
+    function refundVal(uint256 v) external view returns (uint256) {
+        return v - (v * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+    function fullRecord(bytes32 id)
+        external view returns (address c, uint8 ac, uint8 ct, uint128 sw, uint64 ca, bool sm, bool ret) {
+        SignalRecord storage r = _signals[id];
+        return (r.creator, r.assetClass, r.convictionTier, r.sizeWei, r.createdAt, r.smashed, r.retired);
+    }
+    function convictionData(bytes32 id) external view returns (uint256 n, uint256 s, uint256 a) {
+        n = _voteCount[id];
+        s = _voteSum[id];
+        a = n == 0 ? 0 : s / n;
+    }
+    function allIdsList() external view returns (bytes32[] memory) { return _signalIdList; }
+    function range(uint256 a, uint256 b) external view returns (bytes32[] memory) {
+        return this.getSignalIdsInRange(a, b);
+    }
+    function byCreator(address c) external view returns (bytes32[] memory) {
+        return this.getSignalIdsForCreator(c);
+    }
+    function smashedList() external view returns (bytes32[] memory) {
+        return this.getSignalIdsSmashed();
+    }
+    function byAsset(uint8 ac) external view returns (bytes32[] memory) {
+        return this.getSignalIdsByAssetClass(ac);
+    }
+    function byConv(uint8 ct) external view returns (bytes32[] memory) {
+        return this.getSignalIdsByConvictionTier(ct);
+    }
+    function retiredList() external view returns (bytes32[] memory) {
+        return this.getSignalIdsRetired();
+    }
+    function activeList() external view returns (bytes32[] memory) {
+        return this.getSignalIdsActive();
+    }
+    function notSmashedList() external view returns (bytes32[] memory) {
+        return this.getSignalIdsNotSmashed();
+    }
+    function len() external view returns (uint256) { return _signalIdList.length; }
+    function numSmashedRead() external view returns (uint256) { return this.countSmashed(); }
+    function numRetiredRead() external view returns (uint256) { return this.getRetiredCount(); }
+    function numActiveRead() external view returns (uint256) { return this.countActive(); }
+    function first() external view returns (bytes32) {
+        return _signalIdList.length == 0 ? bytes32(0) : _signalIdList[0];
+    }
+    function last() external view returns (bytes32) {
+        return _signalIdList.length == 0 ? bytes32(0) : _signalIdList[_signalIdList.length - 1];
+    }
+    function idxAt(uint256 i) external view returns (bytes32) {
+        if (i >= _signalIdList.length) revert HulkAI_InvalidIndex();
+        return _signalIdList[i];
+    }
+    function frozenNs(bytes32 ns) external view returns (bool) { return _namespaceFrozen[ns]; }
+    function defaultNs() external view returns (bool) { return _namespaceFrozen[HULK_NAMESPACE]; }
+
+    function getConstants()
+        external pure returns (
+            uint256 feeDenom,
+            uint256 maxAc,
+            uint256 maxCt,
+            uint256 maxSig,
+            uint256 maxFee,
+            uint256 minV,
+            uint256 maxV
+        )
+    {
+        return (
+            HULK_FEE_DENOM_BPS,
+            HULK_MAX_ASSET_CLASS,
+            HULK_MAX_CONVICTION,
+            HULK_MAX_SIGNALS,
