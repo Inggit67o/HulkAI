@@ -593,3 +593,88 @@ contract HulkAI {
 
     function getOracle() external view returns (address) {
         return gammaOracle;
+    }
+
+    function getTreasury() external view returns (address) {
+        return smashTreasury;
+    }
+
+    function getGuardian() external view returns (address) {
+        return bannerGuardian;
+    }
+
+    function defaultNamespace() external pure returns (bytes32) {
+        return HULK_NAMESPACE;
+    }
+
+    function maxAssetClass() external pure returns (uint256) {
+        return HULK_MAX_ASSET_CLASS;
+    }
+
+    function maxConviction() external pure returns (uint256) {
+        return HULK_MAX_CONVICTION;
+    }
+
+    function maxSignals() external pure returns (uint256) {
+        return HULK_MAX_SIGNALS;
+    }
+
+    function maxFeeBps() external pure returns (uint256) {
+        return HULK_MAX_FEE_BPS;
+    }
+
+    function minVoteScore() external pure returns (uint256) {
+        return HULK_MIN_VOTE_SCORE;
+    }
+
+    function maxVoteScore() external pure returns (uint256) {
+        return HULK_MAX_VOTE_SCORE;
+    }
+
+    function feeDenomBps() external pure returns (uint256) {
+        return HULK_FEE_DENOM_BPS;
+    }
+
+    function getVoteStats(bytes32 signalId) external view returns (uint256 count, uint256 sum) {
+        return (_voteCount[signalId], _voteSum[signalId]);
+    }
+
+    function getSignalIdsForCreatorPaginated(address creator, uint256 offset, uint256 limit)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        uint256 total = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].creator == creator) total++;
+        }
+        if (offset >= total) {
+            return new bytes32[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        bytes32[] memory out = new bytes32[](n);
+        uint256 collected = 0;
+        uint256 written = 0;
+        for (uint256 i = 0; i < _signalIdList.length && written < n; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].creator == creator) {
+                if (collected >= offset) {
+                    out[written] = id;
+                    written++;
+                }
+                collected++;
+            }
+        }
+        return out;
+    }
+
+    function getSignalIdsSmashedPaginated(uint256 offset, uint256 limit)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        uint256 total = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].smashed) total++;
