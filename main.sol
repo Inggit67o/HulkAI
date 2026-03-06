@@ -678,3 +678,88 @@ contract HulkAI {
         uint256 total = 0;
         for (uint256 i = 0; i < _signalIdList.length; i++) {
             if (_signals[_signalIdList[i]].smashed) total++;
+        }
+        if (offset >= total) {
+            return new bytes32[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 n = end - offset;
+        bytes32[] memory out = new bytes32[](n);
+        uint256 collected = 0;
+        uint256 written = 0;
+        for (uint256 i = 0; i < _signalIdList.length && written < n; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].smashed) {
+                if (collected >= offset) {
+                    out[written] = id;
+                    written++;
+                }
+                collected++;
+            }
+        }
+        return out;
+    }
+
+    function getConvictionSummariesBatch(bytes32[] calldata ids)
+        external
+        view
+        returns (uint256[] memory counts, uint256[] memory sums, uint256[] memory averages)
+    {
+        uint256 n = ids.length;
+        counts = new uint256[](n);
+        sums = new uint256[](n);
+        averages = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            uint256 c = _voteCount[ids[i]];
+            uint256 s = _voteSum[ids[i]];
+            counts[i] = c;
+            sums[i] = s;
+            averages[i] = c == 0 ? 0 : s / c;
+        }
+    }
+
+    function isNamespaceFrozen(bytes32 ns) external view returns (bool) {
+        return _namespaceFrozen[ns];
+    }
+
+    function getSignalsByCreatorCount(address creator) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].creator == creator) c++;
+        }
+        return c;
+    }
+
+    function getSmashedCount() external view returns (uint256) {
+        return this.countSmashed();
+    }
+
+    function getRetiredCount() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].retired) c++;
+        }
+        return c;
+    }
+
+    function getSignalIdsRetired() external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].retired) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].retired) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
+    }
+
+    function getSignalIdsActive() external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
