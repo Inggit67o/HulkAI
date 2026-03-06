@@ -423,3 +423,88 @@ contract HulkAI {
             }
         }
         return out;
+    }
+
+    function getSignalIdsSmashed() external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].smashed) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].smashed) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
+    }
+
+    function getSignalIdsByAssetClass(uint8 assetClass) external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].assetClass == assetClass) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].assetClass == assetClass) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
+    }
+
+    function getSignalIdsByConvictionTier(uint8 tier) external view returns (bytes32[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].convictionTier == tier) count++;
+        }
+        bytes32[] memory out = new bytes32[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            bytes32 id = _signalIdList[i];
+            if (_signals[id].convictionTier == tier) {
+                out[j] = id;
+                j++;
+            }
+        }
+        return out;
+    }
+
+    function countSignalsByAssetClass(uint8 assetClass) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].assetClass == assetClass) c++;
+        }
+        return c;
+    }
+
+    function countSignalsByConvictionTier(uint8 tier) external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].convictionTier == tier) c++;
+        }
+        return c;
+    }
+
+    function countSmashed() external view returns (uint256) {
+        uint256 c = 0;
+        for (uint256 i = 0; i < _signalIdList.length; i++) {
+            if (_signals[_signalIdList[i]].smashed) c++;
+        }
+        return c;
+    }
+
+    // -------------------------------------------------------------------------
+    // HELPERS
+    // -------------------------------------------------------------------------
+
+    function requiredVoteFeeWei(uint256 valueSent) external view returns (uint256) {
+        return (valueSent * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
