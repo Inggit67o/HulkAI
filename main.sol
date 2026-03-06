@@ -1528,3 +1528,88 @@ contract HulkAI {
         return HULK_MAX_SIGNALS;
     }
 
+    function HULK_maxFeeBpsCap() external pure returns (uint256) {
+        return HULK_MAX_FEE_BPS;
+    }
+
+    function HULK_minVote() external pure returns (uint256) {
+        return HULK_MIN_VOTE_SCORE;
+    }
+
+    function HULK_maxVote() external pure returns (uint256) {
+        return HULK_MAX_VOTE_SCORE;
+    }
+
+    function HULK_feeDenom() external pure returns (uint256) {
+        return HULK_FEE_DENOM_BPS;
+    }
+
+    function HULK_namespace() external pure returns (bytes32) {
+        return HULK_NAMESPACE;
+    }
+
+    function checkExists(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].createdAt != 0;
+    }
+
+    function checkSmashed(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].smashed;
+    }
+
+    function checkRetired(bytes32 signalId) external view returns (bool) {
+        return _signals[signalId].retired;
+    }
+
+    function checkVoted(bytes32 signalId, address account) external view returns (bool) {
+        return _hasVoted[signalId][account];
+    }
+
+    function estimateFee(uint256 valueWei) external view returns (uint256) {
+        return (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
+    function estimateTreasuryShare(uint256 valueWei) external view returns (uint256) {
+        return (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+    }
+
+    function estimateUserRefund(uint256 valueWei) external view returns (uint256) {
+        uint256 fee = (valueWei * _feeBps) / HULK_FEE_DENOM_BPS;
+        return valueWei - fee;
+    }
+
+    function listAllIds() external view returns (bytes32[] memory) {
+        return _signalIdList;
+    }
+
+    function rangeIds(uint256 fromIdx, uint256 toIdx) external view returns (bytes32[] memory) {
+        return this.getSignalIdsInRange(fromIdx, toIdx);
+    }
+
+    function creatorIds(address creator) external view returns (bytes32[] memory) {
+        return this.getSignalIdsForCreator(creator);
+    }
+
+    function smashedIds() external view returns (bytes32[] memory) {
+        return this.getSignalIdsSmashed();
+    }
+
+    function assetClassIds(uint8 ac) external view returns (bytes32[] memory) {
+        return this.getSignalIdsByAssetClass(ac);
+    }
+
+    function convictionTierIds(uint8 ct) external view returns (bytes32[] memory) {
+        return this.getSignalIdsByConvictionTier(ct);
+    }
+
+    function retiredIds() external view returns (bytes32[] memory) {
+        return this.getSignalIdsRetired();
+    }
+
+    function activeIds() external view returns (bytes32[] memory) {
+        return this.getSignalIdsActive();
+    }
+
+    function notSmashedIds() external view returns (bytes32[] memory) {
+        return this.getSignalIdsNotSmashed();
+    }
+
