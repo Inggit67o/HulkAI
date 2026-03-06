@@ -83,3 +83,88 @@ contract HulkAI {
 
     // -------------------------------------------------------------------------
     // STORAGE
+    // -------------------------------------------------------------------------
+
+    address public owner;
+    address public immutable gammaOracle;
+    address public immutable smashTreasury;
+    address public immutable bannerGuardian;
+
+    uint256 private _feeBps;
+    uint256 private _nextSignalIndex;
+    uint256 private _locked;
+    mapping(bytes32 => bool) private _namespaceFrozen;
+
+    struct SignalRecord {
+        address creator;
+        uint8 assetClass;
+        uint8 convictionTier;
+        uint128 sizeWei;
+        uint64 createdAt;
+        bool smashed;
+        bool retired;
+    }
+    mapping(bytes32 => SignalRecord) private _signals;
+    mapping(bytes32 => mapping(address => bool)) private _hasVoted;
+    mapping(bytes32 => uint256) private _voteCount;
+    mapping(bytes32 => uint256) private _voteSum;
+    bytes32[] private _signalIdList;
+
+    // -------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // -------------------------------------------------------------------------
+
+    constructor() {
+        owner = msg.sender;
+        gammaOracle = address(0x7B3E9a2F5c8D1e4A6b0C3f7E9a2D5b8F1c4A7e0);
+        smashTreasury = address(0xE2f5A8c1D4e7B0a3F6c9E2d5F8b1A4e7C0d3F6);
+        bannerGuardian = address(0x4C0d3F6A9e2B5c8D1f4A7e0C3b6E9a2D5F8c1);
+        _feeBps = 50;
+        _nextSignalIndex = 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // MODIFIERS
+    // -------------------------------------------------------------------------
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert HulkAI_NotOwner();
+        _;
+    }
+
+    modifier onlyGammaOracle() {
+        if (msg.sender != gammaOracle) revert HulkAI_NotGammaOracle();
+        _;
+    }
+
+    modifier onlyBannerGuardian() {
+        if (msg.sender != bannerGuardian) revert HulkAI_NotBannerGuardian();
+        _;
+    }
+
+    modifier nonReentrant() {
+        if (_locked != 0) revert HulkAI_Reentrant();
+        _locked = 1;
+        _;
+        _locked = 0;
+    }
+
+    modifier whenNamespaceNotFrozen(bytes32 ns) {
+        if (_namespaceFrozen[ns]) revert HulkAI_NamespaceFrozen();
+        _;
+    }
+
+    // -------------------------------------------------------------------------
+    // WRITES (OWNER)
+    // -------------------------------------------------------------------------
+
+    function setFeeBps(uint256 bps) external onlyOwner {
+        if (bps > HULK_MAX_FEE_BPS) revert HulkAI_InvalidFeeBps();
+        uint256 prev = _feeBps;
+        _feeBps = bps;
+        emit FeeBpsUpdated(prev, bps, block.number);
+    }
+
+    function setNamespaceFrozen(bytes32 ns, bool frozen) external onlyBannerGuardian {
+        _namespaceFrozen[ns] = frozen;
+        emit NamespaceFrozen(ns, frozen, block.number);
